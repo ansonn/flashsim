@@ -23,27 +23,27 @@ using namespace ssd;
 
 int main()
 {
-	load_config();
-	print_config(NULL);
+    load_config();
+    print_config(NULL);
 
-	RaidSsd *ssd = new RaidSsd();
+    RaidSsd *ssd = new RaidSsd();
 
-	double result;
-	double cur_time = 1;
+    double result;
+    double cur_time = 1;
 
-	for (int i = 0; i < SIZE; i++)
-	{
-		result = ssd -> event_arrive(WRITE, i*2, 1, 0);
-		cur_time += result;
-	}
-	for (int i = 0; i < SIZE; i++)
-	{
-		result = ssd -> event_arrive(READ, i*2, 1, 0);
-		cur_time += result;
-	}
+    for (int i = 0; i < SIZE; i++)
+    {
+        result = ssd -> event_arrive(WRITE, i*2, 1, 0);
+        cur_time += result;
+    }
+    for (int i = 0; i < SIZE; i++)
+    {
+        result = ssd -> event_arrive(READ, i*2, 1, 0);
+        cur_time += result;
+    }
 
-	printf("Total execution time %f\n", cur_time);
+    printf("Total execution time %f\n", cur_time);
 
-	delete ssd;
-	return 0;
+    delete ssd;
+    return 0;
 }

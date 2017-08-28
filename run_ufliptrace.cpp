@@ -27,47 +27,47 @@
 
 using namespace ssd;
 
-int main(int argc, char **argv){
+int main(int argc, char **argv) {
 
-	long vaddr;
-	ssd::uint queryTime;
-	char ioPatternType; // (S)equential or (R)andom
-	char ioType; // (R)ead or (W)rite
-	double arrive_time;
-	int ioSize;
+    long vaddr;
+    ssd::uint queryTime;
+    char ioPatternType; // (S)equential or (R)andom
+    char ioType; // (R)ead or (W)rite
+    double arrive_time;
+    int ioSize;
 
-	char line[80];
+    char line[80];
 
-	double afterFormatStartTime = 0;
+    double afterFormatStartTime = 0;
 
-	load_config();
-	print_config(NULL);
+    load_config();
+    print_config(NULL);
 
-	Ssd ssd;
+    Ssd ssd;
 
-	printf("INITIALIZING SSD\n");
+    printf("INITIALIZING SSD\n");
 
-	int preIO = SSD_SIZE * PACKAGE_SIZE * DIE_SIZE * PLANE_SIZE * BLOCK_SIZE;
+    int preIO = SSD_SIZE * PACKAGE_SIZE * DIE_SIZE * PLANE_SIZE * BLOCK_SIZE;
 
-	if (FTL_IMPLEMENTATION == 0) // PAGE
-		preIO -= 16*BLOCK_SIZE;
+    if (FTL_IMPLEMENTATION == 0) // PAGE
+        preIO -= 16*BLOCK_SIZE;
 
-	if (FTL_IMPLEMENTATION == 1) // BAST
-		preIO -= (BAST_LOG_PAGE_LIMIT*BLOCK_SIZE)*1.2;
+    if (FTL_IMPLEMENTATION == 1) // BAST
+        preIO -= (BAST_LOG_PAGE_LIMIT*BLOCK_SIZE)*1.2;
 
-	if (FTL_IMPLEMENTATION == 2) // FAST
-		preIO -= (FAST_LOG_PAGE_LIMIT*BLOCK_SIZE)*1.1;
+    if (FTL_IMPLEMENTATION == 2) // FAST
+        preIO -= (FAST_LOG_PAGE_LIMIT*BLOCK_SIZE)*1.1;
 
-	if (FTL_IMPLEMENTATION > 2) // DFTL BIFTL
-		preIO -= 1000;
+    if (FTL_IMPLEMENTATION > 2) // DFTL BIFTL
+        preIO -= 1000;
 
-	//int deviceSize = 2827059;
-	int deviceSize = 2097024;
+    //int deviceSize = 2827059;
+    int deviceSize = 2097024;
 
-	if (preIO > deviceSize)
-		preIO = deviceSize;
+    if (preIO > deviceSize)
+        preIO = deviceSize;
 
-	printf("Writes %i pages for startup out of %i total pages.\n", preIO, SSD_SIZE * PACKAGE_SIZE * DIE_SIZE * PLANE_SIZE * BLOCK_SIZE);
+    printf("Writes %i pages for startup out of %i total pages.\n", preIO, SSD_SIZE * PACKAGE_SIZE * DIE_SIZE * PLANE_SIZE * BLOCK_SIZE);
 
 //	srand(1);
 //	for (int i=0; i<preIO*3;i++)
@@ -81,206 +81,206 @@ int main(int argc, char **argv){
 //			printf("Wrote %i %f\n", i,d );
 //	}
 
-	DIR *working_directory = NULL;
-	if ((working_directory = opendir(argv[1])) == NULL)
-	{
-		printf("Please provide trace file directory.\n");
-		exit(-1);
-	}
+    DIR *working_directory = NULL;
+    if ((working_directory = opendir(argv[1])) == NULL)
+    {
+        printf("Please provide trace file directory.\n");
+        exit(-1);
+    }
 
-	std::vector<std::string> files;
-	struct dirent *dirp;
-	while ((dirp = readdir(working_directory)) != NULL)
-	{
-		if (dirp->d_type == DT_REG)
-			files.push_back(dirp->d_name);
-	}
+    std::vector<std::string> files;
+    struct dirent *dirp;
+    while ((dirp = readdir(working_directory)) != NULL)
+    {
+        if (dirp->d_type == DT_REG)
+            files.push_back(dirp->d_name);
+    }
 
-	std::sort(files.begin(), files.end());
+    std::sort(files.begin(), files.end());
 
-	double start_time = afterFormatStartTime;
-	double timeMultiplier = 10000;
-
-
-	long writeEvent = 0;
-	long readEvent = 0;
-	for (unsigned int i=0; i<files.size();i++)
-	{
-		char *filename = NULL;
-		asprintf(&filename, "%s%s", argv[1], files[i].c_str());
-
-		FILE *trace = NULL;
-		if((trace = fopen(filename, "r")) == NULL){
-			printf("File was moved or access was denied.\n");
-			exit(-1);
-		}
-
-		printf("-__- %s -__-\n", files[i].c_str());
-
-		start_time = start_time + arrive_time;
+    double start_time = afterFormatStartTime;
+    double timeMultiplier = 10000;
 
 
-		int addressDivisor = 1;
-		float multiplier = 1;
+    long writeEvent = 0;
+    long readEvent = 0;
+    for (unsigned int i=0; i<files.size(); i++)
+    {
+        char *filename = NULL;
+        asprintf(&filename, "%s%s", argv[1], files[i].c_str());
 
-		std::string fileName = files[i].c_str();
-		std::string multiplerStr = fileName.substr(fileName.find('P',0)+1, fileName.find_last_of('_', std::string::npos)-fileName.find('P',0)-1);
+        FILE *trace = NULL;
+        if((trace = fopen(filename, "r")) == NULL) {
+            printf("File was moved or access was denied.\n");
+            exit(-1);
+        }
 
-		char pattern = fileName.substr(4,1).c_str()[0];
-		switch (pattern)
-		{
-		case '5':
-			multiplier = atof(multiplerStr.c_str());
-			break;
+        printf("-__- %s -__-\n", files[i].c_str());
 
-		}
-
-		/* first go through and write to all read addresses to prepare the SSD */
-		while(fgets(line, 80, trace) != NULL){
-			sscanf(line, "%c; %c; %li; %u; %i; %lf", &ioPatternType, &ioType, &vaddr, &queryTime, &ioSize, &arrive_time);
-
-			//printf("%li %c %c %li %u %lf %lf %li\n", ++cnt, ioPatternType, ioType, vaddr, queryTime, arrive_time, start_time+arrive_time);
-
-			double local_loop_time = 0;
-
-			if (ioType == 'R')
-			{
-				for (int i=0;i<ioSize;i++)
-				{
-					local_loop_time += ssd.event_arrive(READ, ((vaddr+(i*(int)multiplier))/addressDivisor)%deviceSize, 1, ((start_time+arrive_time)*timeMultiplier)+local_loop_time);
-					readEvent++;
-				}
+        start_time = start_time + arrive_time;
 
 
-			}
-			else if(ioType == 'W')
-			{
-				for (int i=0;i<ioSize;i++)
-				{
-					local_loop_time += ssd.event_arrive(WRITE, ((vaddr+(i*(int)multiplier))/addressDivisor)%deviceSize, 1, ((start_time+arrive_time)*timeMultiplier)+local_loop_time);
-					writeEvent++;
-				}
+        int addressDivisor = 1;
+        float multiplier = 1;
+
+        std::string fileName = files[i].c_str();
+        std::string multiplerStr = fileName.substr(fileName.find('P',0)+1, fileName.find_last_of('_', std::string::npos)-fileName.find('P',0)-1);
+
+        char pattern = fileName.substr(4,1).c_str()[0];
+        switch (pattern)
+        {
+        case '5':
+            multiplier = atof(multiplerStr.c_str());
+            break;
+
+        }
+
+        /* first go through and write to all read addresses to prepare the SSD */
+        while(fgets(line, 80, trace) != NULL) {
+            sscanf(line, "%c; %c; %li; %u; %i; %lf", &ioPatternType, &ioType, &vaddr, &queryTime, &ioSize, &arrive_time);
+
+            //printf("%li %c %c %li %u %lf %lf %li\n", ++cnt, ioPatternType, ioType, vaddr, queryTime, arrive_time, start_time+arrive_time);
+
+            double local_loop_time = 0;
+
+            if (ioType == 'R')
+            {
+                for (int i=0; i<ioSize; i++)
+                {
+                    local_loop_time += ssd.event_arrive(READ, ((vaddr+(i*(int)multiplier))/addressDivisor)%deviceSize, 1, ((start_time+arrive_time)*timeMultiplier)+local_loop_time);
+                    readEvent++;
+                }
 
 
-			}
-
-			arrive_time += local_loop_time;
-		}
-
-		fclose(trace);
-	}
-
-	printf("Pre write done------------------------------\n");
-	ssd.print_ftl_statistics();
-	printf("Num read %li write %li\n", readEvent, writeEvent);
-	getchar();
+            }
+            else if(ioType == 'W')
+            {
+                for (int i=0; i<ioSize; i++)
+                {
+                    local_loop_time += ssd.event_arrive(WRITE, ((vaddr+(i*(int)multiplier))/addressDivisor)%deviceSize, 1, ((start_time+arrive_time)*timeMultiplier)+local_loop_time);
+                    writeEvent++;
+                }
 
 
-	FILE *logFile = NULL;
-	if ((logFile = fopen("output.log", "w")) == NULL)
-	{
-		printf("Output file cannot be written to.\n");
-		exit(-1);
-	}
+            }
 
-	fprintf(logFile, "File;NumIOReads;ReadIOTime;NumIOWrites;WriteIOTime;NumIOTotal;IOTime;");
-	ssd.write_header(logFile);
+            arrive_time += local_loop_time;
+        }
 
-	double read_time = 0;
-	double write_time = 0;
+        fclose(trace);
+    }
 
-	unsigned long num_reads = 0;
-	unsigned long num_writes = 0;
-
-	for (unsigned int i=0; i<files.size();i++)
-	{
-		char *filename = NULL;
-		asprintf(&filename, "%s%s", argv[1], files[i].c_str());
-
-		FILE *trace = NULL;
-		if((trace = fopen(filename, "r")) == NULL){
-			printf("File was moved or access was denied.\n");
-			exit(-1);
-		}
-
-		fprintf(logFile, "%s;", files[i].c_str());
-
-		printf("-__- %s -__-\n", files[i].c_str());
-
-		start_time = start_time + arrive_time;
-
-		// Reset statistics
-		ssd.reset_statistics();
-
-		num_reads = 0;
-		read_time = 0;
-
-		num_writes = 0;
-		write_time = 0;
-
-		int addressDivisor = 1;
-		float multiplier = 1;
-
-		std::string fileName = files[i].c_str();
-		std::string multiplerStr = fileName.substr(fileName.find('P',0)+1, fileName.find_last_of('_', std::string::npos)-fileName.find('P',0)-1);
-
-		char pattern = fileName.substr(4,1).c_str()[0];
-		switch (pattern)
-		{
-		case '5':
-			multiplier = atof(multiplerStr.c_str());
-			break;
-
-		}
-
-		/* first go through and write to all read addresses to prepare the SSD */
-		while(fgets(line, 80, trace) != NULL){
-			sscanf(line, "%c; %c; %li; %u; %i; %lf", &ioPatternType, &ioType, &vaddr, &queryTime, &ioSize, &arrive_time);
-
-			//printf("%li %c %c %li %u %lf %lf %li\n", ++cnt, ioPatternType, ioType, vaddr, queryTime, arrive_time, start_time+arrive_time);
-
-			double local_loop_time = 0;
-
-			if (ioType == 'R')
-			{
-				for (int i=0;i<ioSize;i++)
-				{
-					local_loop_time += ssd.event_arrive(READ, ((vaddr+(i*(int)multiplier))/addressDivisor)%deviceSize, 1, ((start_time+arrive_time)*timeMultiplier)+local_loop_time);
-					num_reads++;
-				}
-
-				read_time += local_loop_time;
-			}
-			else if(ioType == 'W')
-			{
-				for (int i=0;i<ioSize;i++)
-				{
-					local_loop_time += ssd.event_arrive(WRITE, ((vaddr+(i*(int)multiplier))/addressDivisor)%deviceSize, 1, ((start_time+arrive_time)*timeMultiplier)+local_loop_time);
-
-					num_writes++;
-				}
-				write_time += local_loop_time;
-
-			}
-
-			arrive_time += local_loop_time;
-		}
-
-		// Write all statistics
-		fprintf(logFile, "%lu;%f;%lu;%f;%lu;%f;", num_reads, read_time, num_writes, write_time, num_reads+num_writes, read_time+write_time);
-		ssd.write_statistics(logFile);
-
-		fclose(trace);
+    printf("Pre write done------------------------------\n");
+    ssd.print_ftl_statistics();
+    printf("Num read %li write %li\n", readEvent, writeEvent);
+    getchar();
 
 
-	}
+    FILE *logFile = NULL;
+    if ((logFile = fopen("output.log", "w")) == NULL)
+    {
+        printf("Output file cannot be written to.\n");
+        exit(-1);
+    }
 
-	fclose(logFile);
+    fprintf(logFile, "File;NumIOReads;ReadIOTime;NumIOWrites;WriteIOTime;NumIOTotal;IOTime;");
+    ssd.write_header(logFile);
 
-	closedir(working_directory);
+    double read_time = 0;
+    double write_time = 0;
 
-	printf("Finished.\n");
-	return 0;
+    unsigned long num_reads = 0;
+    unsigned long num_writes = 0;
+
+    for (unsigned int i=0; i<files.size(); i++)
+    {
+        char *filename = NULL;
+        asprintf(&filename, "%s%s", argv[1], files[i].c_str());
+
+        FILE *trace = NULL;
+        if((trace = fopen(filename, "r")) == NULL) {
+            printf("File was moved or access was denied.\n");
+            exit(-1);
+        }
+
+        fprintf(logFile, "%s;", files[i].c_str());
+
+        printf("-__- %s -__-\n", files[i].c_str());
+
+        start_time = start_time + arrive_time;
+
+        // Reset statistics
+        ssd.reset_statistics();
+
+        num_reads = 0;
+        read_time = 0;
+
+        num_writes = 0;
+        write_time = 0;
+
+        int addressDivisor = 1;
+        float multiplier = 1;
+
+        std::string fileName = files[i].c_str();
+        std::string multiplerStr = fileName.substr(fileName.find('P',0)+1, fileName.find_last_of('_', std::string::npos)-fileName.find('P',0)-1);
+
+        char pattern = fileName.substr(4,1).c_str()[0];
+        switch (pattern)
+        {
+        case '5':
+            multiplier = atof(multiplerStr.c_str());
+            break;
+
+        }
+
+        /* first go through and write to all read addresses to prepare the SSD */
+        while(fgets(line, 80, trace) != NULL) {
+            sscanf(line, "%c; %c; %li; %u; %i; %lf", &ioPatternType, &ioType, &vaddr, &queryTime, &ioSize, &arrive_time);
+
+            //printf("%li %c %c %li %u %lf %lf %li\n", ++cnt, ioPatternType, ioType, vaddr, queryTime, arrive_time, start_time+arrive_time);
+
+            double local_loop_time = 0;
+
+            if (ioType == 'R')
+            {
+                for (int i=0; i<ioSize; i++)
+                {
+                    local_loop_time += ssd.event_arrive(READ, ((vaddr+(i*(int)multiplier))/addressDivisor)%deviceSize, 1, ((start_time+arrive_time)*timeMultiplier)+local_loop_time);
+                    num_reads++;
+                }
+
+                read_time += local_loop_time;
+            }
+            else if(ioType == 'W')
+            {
+                for (int i=0; i<ioSize; i++)
+                {
+                    local_loop_time += ssd.event_arrive(WRITE, ((vaddr+(i*(int)multiplier))/addressDivisor)%deviceSize, 1, ((start_time+arrive_time)*timeMultiplier)+local_loop_time);
+
+                    num_writes++;
+                }
+                write_time += local_loop_time;
+
+            }
+
+            arrive_time += local_loop_time;
+        }
+
+        // Write all statistics
+        fprintf(logFile, "%lu;%f;%lu;%f;%lu;%f;", num_reads, read_time, num_writes, write_time, num_reads+num_writes, read_time+write_time);
+        ssd.write_statistics(logFile);
+
+        fclose(trace);
+
+
+    }
+
+    fclose(logFile);
+
+    closedir(working_directory);
+
+    printf("Finished.\n");
+    return 0;
 }
 
 

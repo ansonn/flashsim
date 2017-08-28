@@ -33,23 +33,23 @@ using namespace ssd;
 
 /* see "enum event_type" in ssd.h for details on event types */
 Event::Event(enum event_type type, ulong logical_address, uint size, double start_time):
-	start_time(start_time),
-	time_taken(0.0),
-	bus_wait_time(0.0),
-	type(type),
-	logical_address(logical_address),
-	size(size),
-	payload(NULL),
-	next(NULL),
-	noop(false)
+    start_time(start_time),
+    time_taken(0.0),
+    bus_wait_time(0.0),
+    type(type),
+    logical_address(logical_address),
+    size(size),
+    payload(NULL),
+    next(NULL),
+    noop(false)
 {
-	assert(start_time >= 0.0);
-	return;
+    assert(start_time >= 0.0);
+    return;
 }
 
 Event::~Event(void)
 {
-	return;
+    return;
 }
 
 /* find the last event in the list to finish and use that event's finish time
@@ -61,171 +61,171 @@ Event::~Event(void)
  * be careful to only call this method once when the metaevent is finished */
 void Event::consolidate_metaevent(Event &list)
 {
-	Event *cur;
-	double max;
-	double tmp;
+    Event *cur;
+    double max;
+    double tmp;
 
-	assert(start_time >= 0);
+    assert(start_time >= 0);
 
-	/* find max time taken with respect to this event's start_time */
-	max = start_time - list.start_time + list.time_taken;
-	for(cur = list.next; cur != NULL; cur = cur -> next)
-	{
-		tmp = start_time - cur -> start_time + cur -> time_taken;
-		if(tmp > max)
-			max = tmp;
-		bus_wait_time += cur -> get_bus_wait_time();
-	}
-	time_taken = max;
+    /* find max time taken with respect to this event's start_time */
+    max = start_time - list.start_time + list.time_taken;
+    for(cur = list.next; cur != NULL; cur = cur -> next)
+    {
+        tmp = start_time - cur -> start_time + cur -> time_taken;
+        if(tmp > max)
+            max = tmp;
+        bus_wait_time += cur -> get_bus_wait_time();
+    }
+    time_taken = max;
 
-	assert(time_taken >= 0);
-	assert(bus_wait_time >= 0);
-	return;
+    assert(time_taken >= 0);
+    assert(bus_wait_time >= 0);
+    return;
 }
 
 ssd::ulong Event::get_logical_address(void) const
 {
-	return logical_address;
+    return logical_address;
 }
 
 const Address &Event::get_address(void) const
 {
-	return address;
+    return address;
 }
 
 const Address &Event::get_merge_address(void) const
 {
-	return merge_address;
+    return merge_address;
 }
 
 const Address &Event::get_log_address(void) const
 {
-	return log_address;
+    return log_address;
 }
 
 const Address &Event::get_replace_address(void) const
 {
-	return replace_address;
+    return replace_address;
 }
 
 void Event::set_log_address(const Address &address)
 {
-	log_address = address;
+    log_address = address;
 }
 
 ssd::uint Event::get_size(void) const
 {
-	return size;
+    return size;
 }
 
 enum event_type Event::get_event_type(void) const
 {
-	return type;
+    return type;
 }
 
 void Event::set_event_type(const enum event_type &type)
 {
-	this->type = type;
+    this->type = type;
 }
 
 double Event::get_start_time(void) const
 {
-	assert(start_time >= 0.0);
-	return start_time;
+    assert(start_time >= 0.0);
+    return start_time;
 }
 
 double Event::get_time_taken(void) const
 {
 
-	assert(time_taken >= 0.0);
-	return time_taken;
+    assert(time_taken >= 0.0);
+    return time_taken;
 }
 
 double Event::get_bus_wait_time(void) const
 {
-	assert(bus_wait_time >= 0.0);
-	return bus_wait_time;
+    assert(bus_wait_time >= 0.0);
+    return bus_wait_time;
 }
 
 bool Event::get_noop(void) const
 {
-	return noop;
+    return noop;
 }
 
 Event *Event::get_next(void) const
 {
-	return next;
+    return next;
 }
 
 void Event::set_payload(void *payload)
 {
-	this->payload = payload;
+    this->payload = payload;
 }
 
 void *Event::get_payload(void) const
 {
-	return payload;
+    return payload;
 }
 
 void Event::set_address(const Address &address)
 {
-	this -> address = address;
-	return;
+    this -> address = address;
+    return;
 }
 
 void Event::set_merge_address(const Address &address)
 {
-	merge_address = address;
-	return;
+    merge_address = address;
+    return;
 }
 
 void Event::set_replace_address(const Address &address)
 {
-	replace_address = address;
+    replace_address = address;
 }
 
 void Event::set_noop(bool value)
 {
-	noop = value;
+    noop = value;
 }
 
 void Event::set_next(Event &next)
 {
-	this -> next = &next;
-	return;
+    this -> next = &next;
+    return;
 }
 
 double Event::incr_bus_wait_time(double time_incr)
 {
-	if(time_incr > 0.0)
-		bus_wait_time += time_incr;
-	return bus_wait_time;
+    if(time_incr > 0.0)
+        bus_wait_time += time_incr;
+    return bus_wait_time;
 }
 
 double Event::incr_time_taken(double time_incr)
 {
-  	if(time_incr > 0.0)
-		time_taken += time_incr;
-	return time_taken;
+    if(time_incr > 0.0)
+        time_taken += time_incr;
+    return time_taken;
 }
 
 void Event::print(FILE *stream)
 {
-	if(type == READ)
-		fprintf(stream, "Read ");
-	else if(type == WRITE)
-		fprintf(stream, "Write");
-	else if(type == ERASE)
-		fprintf(stream, "Erase");
-	else if(type == MERGE)
-		fprintf(stream, "Merge");
-	else
-		fprintf(stream, "Unknown event type: ");
-	address.print(stream);
-	if(type == MERGE)
-		merge_address.print(stream);
-	fprintf(stream, " Time[%f, %f) Bus_wait: %f\n", start_time, start_time + time_taken, bus_wait_time);
-	return;
+    if(type == READ)
+        fprintf(stream, "Read ");
+    else if(type == WRITE)
+        fprintf(stream, "Write");
+    else if(type == ERASE)
+        fprintf(stream, "Erase");
+    else if(type == MERGE)
+        fprintf(stream, "Merge");
+    else
+        fprintf(stream, "Unknown event type: ");
+    address.print(stream);
+    if(type == MERGE)
+        merge_address.print(stream);
+    fprintf(stream, " Time[%f, %f) Bus_wait: %f\n", start_time, start_time + time_taken, bus_wait_time);
+    return;
 }
 
 #if 0
@@ -234,34 +234,34 @@ void Event::print(FILE *stream)
 /* caution: copies pointers from rhs */
 ioreq_event &Event::operator= (const ioreq_event &rhs)
 {
-	assert(&rhs != NULL);
-	if((const ioreq_event *) &rhs == (const ioreq_event *) &(this -> ioreq))
-		return *(this -> ioreq);
-	ioreq -> time = rhs.time;
-	ioreq -> type = rhs.type;
-	ioreq -> next = rhs.next;
-	ioreq -> prev = rhs.prev;
-	ioreq -> bcount = rhs.bcount;
-	ioreq -> blkno = rhs.blkno;
-	ioreq -> flags = rhs.flags;
-	ioreq -> busno = rhs.busno;
-	ioreq -> slotno = rhs.slotno;
-	ioreq -> devno = rhs.devno;
-	ioreq -> opid = rhs.opid;
-	ioreq -> buf = rhs.buf;
-	ioreq -> cause = rhs.cause;
-	ioreq -> tempint1 = rhs.tempint1;
-	ioreq -> tempint2 = rhs.tempint2;
-	ioreq -> tempptr1 = rhs.tempptr1;
-	ioreq -> tempptr2 = rhs.tempptr2;
-	ioreq -> mems_sled = rhs.mems_sled;
-	ioreq -> mems_reqinfo = rhs.mems_reqinfo;
-	ioreq -> start_time = rhs.start_time;
-	ioreq -> batchno = rhs.batchno;
-	ioreq -> batch_complete = rhs.batch_complete;
-	ioreq -> batch_size = rhs.batch_size;
-	ioreq -> batch_next = rhs.batch_next;
-	ioreq -> batch_prev = rhs.batch_prev;
-	return *ioreq;
+    assert(&rhs != NULL);
+    if((const ioreq_event *) &rhs == (const ioreq_event *) &(this -> ioreq))
+        return *(this -> ioreq);
+    ioreq -> time = rhs.time;
+    ioreq -> type = rhs.type;
+    ioreq -> next = rhs.next;
+    ioreq -> prev = rhs.prev;
+    ioreq -> bcount = rhs.bcount;
+    ioreq -> blkno = rhs.blkno;
+    ioreq -> flags = rhs.flags;
+    ioreq -> busno = rhs.busno;
+    ioreq -> slotno = rhs.slotno;
+    ioreq -> devno = rhs.devno;
+    ioreq -> opid = rhs.opid;
+    ioreq -> buf = rhs.buf;
+    ioreq -> cause = rhs.cause;
+    ioreq -> tempint1 = rhs.tempint1;
+    ioreq -> tempint2 = rhs.tempint2;
+    ioreq -> tempptr1 = rhs.tempptr1;
+    ioreq -> tempptr2 = rhs.tempptr2;
+    ioreq -> mems_sled = rhs.mems_sled;
+    ioreq -> mems_reqinfo = rhs.mems_reqinfo;
+    ioreq -> start_time = rhs.start_time;
+    ioreq -> batchno = rhs.batchno;
+    ioreq -> batch_complete = rhs.batch_complete;
+    ioreq -> batch_size = rhs.batch_size;
+    ioreq -> batch_next = rhs.batch_next;
+    ioreq -> batch_prev = rhs.batch_prev;
+    return *ioreq;
 }
 #endif

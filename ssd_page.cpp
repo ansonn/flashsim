@@ -31,82 +31,82 @@
 #include "ssd.h"
 
 namespace ssd {
-	/*
-	 * Buffer used for accessing data pages.
-	 */
-	void *global_buffer;
+/*
+ * Buffer used for accessing data pages.
+ */
+void *global_buffer;
 
 }
 
 using namespace ssd;
 
 Page::Page(const Block &parent, double read_delay, double write_delay):
-	state(EMPTY),
-	parent(parent),
-	read_delay(read_delay),
-	write_delay(write_delay)
+    state(EMPTY),
+    parent(parent),
+    read_delay(read_delay),
+    write_delay(write_delay)
 {
-	if(read_delay < 0.0){
-		fprintf(stderr, "Page warning: %s: constructor received negative read delay value\n\tsetting read delay to 0.0\n", __func__);
-		this -> read_delay = 0.0;
-	}
+    if(read_delay < 0.0) {
+        fprintf(stderr, "Page warning: %s: constructor received negative read delay value\n\tsetting read delay to 0.0\n", __func__);
+        this -> read_delay = 0.0;
+    }
 
-	if(write_delay < 0.0){
-		fprintf(stderr, "Page warning: %s: constructor received negative write delay value\n\tsetting write delay to 0.0\n", __func__);
-		this -> write_delay = 0.0;
-	}
-	return;
+    if(write_delay < 0.0) {
+        fprintf(stderr, "Page warning: %s: constructor received negative write delay value\n\tsetting write delay to 0.0\n", __func__);
+        this -> write_delay = 0.0;
+    }
+    return;
 }
 
 Page::~Page(void)
 {
-	return;
+    return;
 }
 
 enum status Page::_read(Event &event)
 {
-	assert(read_delay >= 0.0);
+    assert(read_delay >= 0.0);
 
-	event.incr_time_taken(read_delay);
+    event.incr_time_taken(read_delay);
 
-	if (!event.get_noop() && PAGE_ENABLE_DATA)
-		global_buffer = (char*)page_data + event.get_address().get_linear_address() * PAGE_SIZE;
+    if (!event.get_noop() && PAGE_ENABLE_DATA)
+        global_buffer = (char*)page_data + event.get_address().get_linear_address() * PAGE_SIZE;
 
-	return SUCCESS;
+    return SUCCESS;
 }
 
 enum status Page::_write(Event &event)
 {
-	assert(write_delay >= 0.0);
+    assert(write_delay >= 0.0);
 
-	event.incr_time_taken(write_delay);
+    event.incr_time_taken(write_delay);
 
-	if (PAGE_ENABLE_DATA && event.get_payload() != NULL && event.get_noop() == false)
-	{
-		void *data = (char*)page_data + event.get_address().get_linear_address() * PAGE_SIZE;
-		memcpy (data, event.get_payload(), PAGE_SIZE);
-	}
+    if (PAGE_ENABLE_DATA && event.get_payload() != NULL && event.get_noop() == false)
+    {
+        void *data = (char*)page_data + event.get_address().get_linear_address() * PAGE_SIZE;
+        memcpy (data, event.get_payload(), PAGE_SIZE);
+    }
 
-	if (event.get_noop() == false)
-	{
-		assert(state == EMPTY);
-		state = VALID;
-	}
+    if (event.get_noop() == false)
+    {
+        assert(state == EMPTY);
+        state = VALID;
+    }
 
-	return SUCCESS;
+    return SUCCESS;
 }
 
 const Block &Page::get_parent(void) const
 {
-	return parent;
+    return parent;
 }
 
 enum page_state Page::get_state(void) const
 {
-	return state;
+    return state;
 }
 
 void Page::set_state(enum page_state state)
 {
-	this -> state = state;
+    this -> state = state;
 }

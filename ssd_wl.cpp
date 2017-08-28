@@ -34,15 +34,15 @@ using namespace ssd;
 Wear_leveler::Wear_leveler(FtlParent &ftl)
 {
 
-	return;
+    return;
 }
 
 Wear_leveler::~Wear_leveler(void)
 {
-	return;
+    return;
 }
 
 enum status Wear_leveler::insert(const Address &address)
 {
-	return SUCCESS;
+    return SUCCESS;
 }

@@ -30,46 +30,46 @@ Block_manager *Block_manager::inst = NULL;
 
 FtlParent::FtlParent(Controller &controller) : controller(controller)
 {
-	Block_manager::instance_initialize(this);
+    Block_manager::instance_initialize(this);
 
-	printf("Number of addressable blocks: %u\n", NUMBER_OF_ADDRESSABLE_BLOCKS);
+    printf("Number of addressable blocks: %u\n", NUMBER_OF_ADDRESSABLE_BLOCKS);
 
 }
 
 
 ssd::ulong FtlParent::get_erases_remaining(const Address &address) const
 {
-	return controller.get_erases_remaining(address);
+    return controller.get_erases_remaining(address);
 }
 
 void FtlParent::get_least_worn(Address &address) const
 {
-	controller.get_least_worn(address);
-	return;
+    controller.get_least_worn(address);
+    return;
 }
 
 enum page_state FtlParent::get_state(const Address &address) const
 {
-	return controller.get_state(address);
+    return controller.get_state(address);
 }
 
 enum block_state FtlParent::get_block_state(const Address &address) const
 {
-	return controller.get_block_state(address);
+    return controller.get_block_state(address);
 }
 
 Block *FtlParent::get_block_pointer(const Address &address)
 {
-	return controller.get_block_pointer(address);
+    return controller.get_block_pointer(address);
 }
 
 void FtlParent::cleanup_block(Event &event, Block *block)
 {
-	assert(false);
-	return;
+    assert(false);
+    return;
 }
 
 void FtlParent::print_ftl_statistics()
 {
-	return;
+    return;
 }

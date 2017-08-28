@@ -42,51 +42,51 @@ using namespace ssd;
  * it is not necessary to use the max connections properly, but it is provided
  * 	to help ensure correctness */
 Bus::Bus(uint num_channels, double ctrl_delay, double data_delay, uint table_size, uint max_connections):
-	num_channels(num_channels),
+    num_channels(num_channels),
 
-	/* use a const pointer (Channel * const channels) to use as an array
-	 * but like a reference, we cannot reseat the pointer */
-	channels((Channel *) malloc(num_channels * sizeof(Channel)))
+    /* use a const pointer (Channel * const channels) to use as an array
+     * but like a reference, we cannot reseat the pointer */
+    channels((Channel *) malloc(num_channels * sizeof(Channel)))
 {
-	assert(table_size > 0);
-	if(ctrl_delay < 0.0){
-		fprintf(stderr, "Bus warning: %s: constructor received negative control delay value\n\tsetting control delay to 0.0\n", __func__);
-		ctrl_delay = 0.0;
-	}
-	if(data_delay < 0.0){
-		fprintf(stderr, "Bus warning: %s: constructor received negative data delay value\n\tsetting data delay to 0.0\n", __func__);
-		data_delay = 0.0;
-	}
-	uint i;
+    assert(table_size > 0);
+    if(ctrl_delay < 0.0) {
+        fprintf(stderr, "Bus warning: %s: constructor received negative control delay value\n\tsetting control delay to 0.0\n", __func__);
+        ctrl_delay = 0.0;
+    }
+    if(data_delay < 0.0) {
+        fprintf(stderr, "Bus warning: %s: constructor received negative data delay value\n\tsetting data delay to 0.0\n", __func__);
+        data_delay = 0.0;
+    }
+    uint i;
 
-	/* allocate channels */
-	/* new cannot initialize an array with constructor args
-	 *    malloc the array
-	 *    then use placement new to call the constructor for each element
-	 * chose an array over container class so we don't have to rely on anything
-	 *    i.e. STL's std::vector */
-	/* array allocated in initializer list:
-	 * channels = (Channel *) malloc(num_channels * sizeof(Channel)); */
-	if(channels == NULL)
-	{
-		fprintf(stderr, "Bus error: %s: constructor unable to allocate Channels\n", __func__);
-		exit(MEM_ERR);
-	}
-	for(i = 0; i < num_channels; i++)
-		(void) new (&channels[i]) Channel(ctrl_delay, data_delay, table_size, max_connections);
+    /* allocate channels */
+    /* new cannot initialize an array with constructor args
+     *    malloc the array
+     *    then use placement new to call the constructor for each element
+     * chose an array over container class so we don't have to rely on anything
+     *    i.e. STL's std::vector */
+    /* array allocated in initializer list:
+     * channels = (Channel *) malloc(num_channels * sizeof(Channel)); */
+    if(channels == NULL)
+    {
+        fprintf(stderr, "Bus error: %s: constructor unable to allocate Channels\n", __func__);
+        exit(MEM_ERR);
+    }
+    for(i = 0; i < num_channels; i++)
+        (void) new (&channels[i]) Channel(ctrl_delay, data_delay, table_size, max_connections);
 
-	return;
+    return;
 }
 
 /* deallocate channels */
 Bus::~Bus(void)
 {
-	assert(channels != NULL);
-	uint i;
-	for(i = 0; i < num_channels; i++)
-		channels[i].~Channel();
-	free(channels);
-	return;
+    assert(channels != NULL);
+    uint i;
+    for(i = 0; i < num_channels; i++)
+        channels[i].~Channel();
+    free(channels);
+    return;
 }
 
 /* not required before calling lock()
@@ -95,8 +95,8 @@ Bus::~Bus(void)
  * 	only devices that use a channel should connect/disconnect */
 enum status Bus::connect(uint channel)
 {
-	assert(channels != NULL && channel < num_channels);
-	return channels[channel].connect();
+    assert(channels != NULL && channel < num_channels);
+    return channels[channel].connect();
 }
 
 /* not required when finished
@@ -105,8 +105,8 @@ enum status Bus::connect(uint channel)
  * 	only devices that use a channel should connect/disconnect */
 enum status Bus::disconnect(uint channel)
 {
-	assert(channels != NULL && channel < num_channels);
-	return channels[channel].disconnect();
+    assert(channels != NULL && channel < num_channels);
+    return channels[channel].disconnect();
 }
 
 /* lock bus channel for event
@@ -117,18 +117,18 @@ enum status Bus::disconnect(uint channel)
  */
 enum status Bus::lock(uint channel, double start_time, double duration, Event &event)
 {
-	assert(channels != NULL && start_time >= 0.0 && duration > 0.0);
-	return channels[channel].lock(start_time, duration, event);
+    assert(channels != NULL && start_time >= 0.0 && duration > 0.0);
+    return channels[channel].lock(start_time, duration, event);
 }
 
 Channel &Bus::get_channel(uint channel)
 {
-	assert(channels != NULL && channel < num_channels);
-	return channels[channel];
+    assert(channels != NULL && channel < num_channels);
+    return channels[channel];
 }
 
 double Bus::ready_time(uint channel)
 {
-	assert(channels != NULL && channel < num_channels);
-	return channels[channel].ready_time();
+    assert(channels != NULL && channel < num_channels);
+    return channels[channel].ready_time();
 }

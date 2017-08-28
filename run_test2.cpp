@@ -30,30 +30,30 @@ using namespace ssd;
 
 int main()
 {
-	load_config();
-	print_config(NULL);
-   printf("Press ENTER to continue...");
-   getchar();
-   printf("\n");
+    load_config();
+    print_config(NULL);
+    printf("Press ENTER to continue...");
+    getchar();
+    printf("\n");
 
-	Ssd *ssd = new Ssd();
+    Ssd *ssd = new Ssd();
 
-	double result;
-	double cur_time = 1;
-	double delta = BUS_DATA_DELAY - 2 > 0 ? BUS_DATA_DELAY - 2 : BUS_DATA_DELAY;
+    double result;
+    double cur_time = 1;
+    double delta = BUS_DATA_DELAY - 2 > 0 ? BUS_DATA_DELAY - 2 : BUS_DATA_DELAY;
 
-	for (int i = 0; i < SIZE; i++, cur_time += delta)
-	{
-		/* event_arrive(event_type, logical_address, size, start_time) */
-		result = ssd -> event_arrive(WRITE, i, 1, cur_time);
-		result = ssd -> event_arrive(WRITE, i+10240, 1, cur_time);
-	}
-	for (int i = 0; i < SIZE; i++, cur_time += delta)
-	{
-		/* event_arrive(event_type, logical_address, size, start_time) */
-		result = ssd -> event_arrive(READ, 1, 1, cur_time);
-		result = ssd -> event_arrive(READ, i, 1, cur_time);
-	}
-	delete ssd;
-	return 0;
+    for (int i = 0; i < SIZE; i++, cur_time += delta)
+    {
+        /* event_arrive(event_type, logical_address, size, start_time) */
+        result = ssd -> event_arrive(WRITE, i, 1, cur_time);
+        result = ssd -> event_arrive(WRITE, i+10240, 1, cur_time);
+    }
+    for (int i = 0; i < SIZE; i++, cur_time += delta)
+    {
+        /* event_arrive(event_type, logical_address, size, start_time) */
+        result = ssd -> event_arrive(READ, 1, 1, cur_time);
+        result = ssd -> event_arrive(READ, i, 1, cur_time);
+    }
+    delete ssd;
+    return 0;
 }

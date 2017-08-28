@@ -33,12 +33,12 @@ using namespace ssd;
 
 Garbage_collector::Garbage_collector(FtlParent &ftl)
 {
-	return;
+    return;
 }
 
 Garbage_collector::~Garbage_collector(void)
 {
-	return;
+    return;
 }
 
 void Garbage_collector::clean(Address &address)

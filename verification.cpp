@@ -26,79 +26,79 @@
 
 using namespace ssd;
 
-int main(int argc, char **argv){
+int main(int argc, char **argv) {
 
-	long vaddr;
+    long vaddr;
 
-	double arrive_time;
+    double arrive_time;
 
-	double afterFormatStartTime = 0;
+    double afterFormatStartTime = 0;
 
-	load_config();
-	print_config(NULL);
+    load_config();
+    print_config(NULL);
 
-	Ssd ssd;
+    Ssd ssd;
 
-	printf("INITIALIZING SSD\n");
+    printf("INITIALIZING SSD\n");
 
-	srandom(1);
-	int preIO = SSD_SIZE * PACKAGE_SIZE * DIE_SIZE * PLANE_SIZE * BLOCK_SIZE;
+    srandom(1);
+    int preIO = SSD_SIZE * PACKAGE_SIZE * DIE_SIZE * PLANE_SIZE * BLOCK_SIZE;
 
-	if (FTL_IMPLEMENTATION == 0) // PAGE
-		preIO -= 16*BLOCK_SIZE;
+    if (FTL_IMPLEMENTATION == 0) // PAGE
+        preIO -= 16*BLOCK_SIZE;
 
-	if (FTL_IMPLEMENTATION == 1) // BAST
-		preIO -= (BAST_LOG_PAGE_LIMIT*BLOCK_SIZE)*1.3;
+    if (FTL_IMPLEMENTATION == 1) // BAST
+        preIO -= (BAST_LOG_PAGE_LIMIT*BLOCK_SIZE)*1.3;
 
-	if (FTL_IMPLEMENTATION == 2) // FAST
-		preIO -= (FAST_LOG_PAGE_LIMIT*BLOCK_SIZE)*1.1;
+    if (FTL_IMPLEMENTATION == 2) // FAST
+        preIO -= (FAST_LOG_PAGE_LIMIT*BLOCK_SIZE)*1.1;
 
-	if (FTL_IMPLEMENTATION > 2) // DFTL BIFTL
-		preIO -= 1024;
+    if (FTL_IMPLEMENTATION > 2) // DFTL BIFTL
+        preIO -= 1024;
 
-	int deviceSize = 3145216;
+    int deviceSize = 3145216;
 
-	if (preIO > deviceSize)
-		preIO = deviceSize;
+    if (preIO > deviceSize)
+        preIO = deviceSize;
 
-	printf("Writes %i pages for startup out of %i total pages.\n", preIO, SSD_SIZE * PACKAGE_SIZE * DIE_SIZE * PLANE_SIZE * BLOCK_SIZE);
+    printf("Writes %i pages for startup out of %i total pages.\n", preIO, SSD_SIZE * PACKAGE_SIZE * DIE_SIZE * PLANE_SIZE * BLOCK_SIZE);
 
-	double start_time = afterFormatStartTime;
-	double timeMultiplier = 10000;
+    double start_time = afterFormatStartTime;
+    double timeMultiplier = 10000;
 
-	FILE *logFile = NULL;
-	if ((logFile = fopen("output.log", "w")) == NULL)
-	{
-		printf("Output file cannot be written to.\n");
-		exit(-1);
-	}
+    FILE *logFile = NULL;
+    if ((logFile = fopen("output.log", "w")) == NULL)
+    {
+        printf("Output file cannot be written to.\n");
+        exit(-1);
+    }
 
-	fprintf(logFile, "NumIOReads;ReadIOTime;NumIOWrites;WriteIOTime;NumIOTotal;IOTime;");
-	ssd.write_header(logFile);
+    fprintf(logFile, "NumIOReads;ReadIOTime;NumIOWrites;WriteIOTime;NumIOTotal;IOTime;");
+    ssd.write_header(logFile);
 
-	double read_time = 0;
-	double write_time = 0;
+    double read_time = 0;
+    double write_time = 0;
 
-	unsigned long num_reads = 0;
-	unsigned long num_writes = 0;
+    unsigned long num_reads = 0;
+    unsigned long num_writes = 0;
 
-	std::vector<double> avgs;
+    std::vector<double> avgs;
 
-	// Reset statistics
-	ssd.reset_statistics();
+    // Reset statistics
+    ssd.reset_statistics();
 
-	num_reads = 0;
-	read_time = 0;
+    num_reads = 0;
+    read_time = 0;
 
-	num_writes = 0;
-	write_time = 0;
+    num_writes = 0;
+    write_time = 0;
 
-	int addressDivisor = 1;
-	float multiplier = 1;
+    int addressDivisor = 1;
+    float multiplier = 1;
 
-	//ssd.reset_statistics();
+    //ssd.reset_statistics();
 
-	avgs.reserve(preIO);
+    avgs.reserve(preIO);
 
 
 
@@ -156,69 +156,69 @@ int main(int argc, char **argv){
 //			printf("%i\n", i);
 //	}
 
-	ssd.print_ftl_statistics();
+    ssd.print_ftl_statistics();
 
-	/* Test 3 Start -------------------------------------------------------------------------- */
-	srandom(1);
-	int seqSize = 128*64;
+    /* Test 3 Start -------------------------------------------------------------------------- */
+    srandom(1);
+    int seqSize = 128*64;
 
-	for (int i=0; i<preIO*1.3;i++)
-	{
-
-
-		int	r = random()%deviceSize;
+    for (int i=0; i<preIO*1.3; i++)
+    {
 
 
-		write_time = ssd.event_arrive(WRITE, r, 1, ((start_time+arrive_time)*timeMultiplier));
-		avgs.push_back(write_time);
-		num_writes++;
-
-		arrive_time += write_time;
-
-		if (i % 100000 == 0)
-			printf("%i\n", i);
-	}
-
-	for (int i=preIO/2-seqSize/2; i<preIO/2+seqSize;i++)
-	{
-		write_time = ssd.event_arrive(TRIM, i, 1, ((start_time+arrive_time)*timeMultiplier));
-		avgs.push_back(write_time);
-		num_writes++;
-
-		arrive_time += write_time;
-		printf("%i\n", i);
-	}
-
-	/* Test 3 Stop -------------------------------------------------------------------------- */
-
-	double mean = 0.0;
-	for (size_t i=0;i<avgs.size();i++)
-	{
-		mean += avgs[i];
-	}
-
-	mean = mean / (double)avgs.size();
-
-	printf("Mean: %f\n", mean);
-
-	double var = 0.0;
-	for (size_t i=0;i<avgs.size();i++)
-	{
-		var += pow(avgs[i]-mean,2);
-	}
-
-	var /= avgs.size();
-
-	printf("Var: %f\n", sqrt(var));
-
-	ssd.print_ftl_statistics();
-	ssd.print_statistics();
+        int	r = random()%deviceSize;
 
 
-	fclose(logFile);
+        write_time = ssd.event_arrive(WRITE, r, 1, ((start_time+arrive_time)*timeMultiplier));
+        avgs.push_back(write_time);
+        num_writes++;
 
-	printf("Finished.\n");
-	return 0;
+        arrive_time += write_time;
+
+        if (i % 100000 == 0)
+            printf("%i\n", i);
+    }
+
+    for (int i=preIO/2-seqSize/2; i<preIO/2+seqSize; i++)
+    {
+        write_time = ssd.event_arrive(TRIM, i, 1, ((start_time+arrive_time)*timeMultiplier));
+        avgs.push_back(write_time);
+        num_writes++;
+
+        arrive_time += write_time;
+        printf("%i\n", i);
+    }
+
+    /* Test 3 Stop -------------------------------------------------------------------------- */
+
+    double mean = 0.0;
+    for (size_t i=0; i<avgs.size(); i++)
+    {
+        mean += avgs[i];
+    }
+
+    mean = mean / (double)avgs.size();
+
+    printf("Mean: %f\n", mean);
+
+    double var = 0.0;
+    for (size_t i=0; i<avgs.size(); i++)
+    {
+        var += pow(avgs[i]-mean,2);
+    }
+
+    var /= avgs.size();
+
+    printf("Var: %f\n", sqrt(var));
+
+    ssd.print_ftl_statistics();
+    ssd.print_statistics();
+
+
+    fclose(logFile);
+
+    printf("Finished.\n");
+    return 0;
 }
 
 

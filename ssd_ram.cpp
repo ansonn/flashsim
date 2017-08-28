@@ -32,39 +32,39 @@
 
 using namespace ssd;
 
- 
+
 Ram::Ram(double read_delay, double write_delay):
-	read_delay(read_delay),
-	write_delay(write_delay)
+    read_delay(read_delay),
+    write_delay(write_delay)
 {
-	if(read_delay <= 0)
-	{
-		fprintf(stderr, "RAM: %s: constructor received negative read delay value\n\tsetting read delay to 0.0\n", __func__);
-		read_delay = 0.0;
-	}
-	if(write_delay <= 0)
-	{
-		fprintf(stderr, "RAM: %s: constructor received negative write delay value\n\tsetting write delay to 0.0\n", __func__);
-		write_delay = 0.0;
-	}
-	return;
+    if(read_delay <= 0)
+    {
+        fprintf(stderr, "RAM: %s: constructor received negative read delay value\n\tsetting read delay to 0.0\n", __func__);
+        read_delay = 0.0;
+    }
+    if(write_delay <= 0)
+    {
+        fprintf(stderr, "RAM: %s: constructor received negative write delay value\n\tsetting write delay to 0.0\n", __func__);
+        write_delay = 0.0;
+    }
+    return;
 }
 
 Ram::~Ram(void)
 {
-	return;
+    return;
 }
 
 enum status Ram::read(Event &event)
 {
-	assert(read_delay >= 0.0);
-	(void) event.incr_time_taken(read_delay * event.get_size());
-	return SUCCESS;
+    assert(read_delay >= 0.0);
+    (void) event.incr_time_taken(read_delay * event.get_size());
+    return SUCCESS;
 }
 
 enum status Ram::write(Event &event)
 {
-	assert(write_delay >= 0.0);
-	(void) event.incr_time_taken(write_delay * event.get_size());
-	return SUCCESS;
+    assert(write_delay >= 0.0);
+    (void) event.incr_time_taken(write_delay * event.get_size());
+    return SUCCESS;
 }

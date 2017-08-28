@@ -38,32 +38,32 @@ using namespace ssd;
  * occurs in the order of declaration in the class definition and not in the
  * order listed here */
 RaidSsd::RaidSsd(uint ssd_size):
-	size(ssd_size)
+    size(ssd_size)
 {
-/*
- * Idea
- *
- * Create the instances of the SSDs.
- *
- * Techniques
- *
- * 1. Striping
- * 2. Address splitting.
- * 3. Complete control
- */
-	Ssds = new Ssd[RAID_NUMBER_OF_PHYSICAL_SSDS];
+    /*
+     * Idea
+     *
+     * Create the instances of the SSDs.
+     *
+     * Techniques
+     *
+     * 1. Striping
+     * 2. Address splitting.
+     * 3. Complete control
+     */
+    Ssds = new Ssd[RAID_NUMBER_OF_PHYSICAL_SSDS];
 
-	return;
+    return;
 }
 
 RaidSsd::~RaidSsd(void)
 {
-	return;
+    return;
 }
 
 double RaidSsd::event_arrive(enum event_type type, ulong logical_address, uint size, double start_time)
 {
-	return event_arrive(type, logical_address, size, start_time, NULL);
+    return event_arrive(type, logical_address, size, start_time, NULL);
 }
 
 /* This is the function that will be called by DiskSim
@@ -74,41 +74,41 @@ double RaidSsd::event_arrive(enum event_type type, ulong logical_address, uint s
  * 	request.  Remember to use the same time units as in the config file. */
 double RaidSsd::event_arrive(enum event_type type, ulong logical_address, uint size, double start_time, void *buffer)
 {
-	if (type == WRITE)
-		printf("Writing to logical address: %lu\n", logical_address);
-	else if (type == READ)
-		printf("Read from logical address: %lu\n", logical_address);
+    if (type == WRITE)
+        printf("Writing to logical address: %lu\n", logical_address);
+    else if (type == READ)
+        printf("Read from logical address: %lu\n", logical_address);
 
-	if (PARALLELISM_MODE == 1) // Striping
-	{
-		double timings[RAID_NUMBER_OF_PHYSICAL_SSDS];
-		for (int i=0;i<RAID_NUMBER_OF_PHYSICAL_SSDS;i++)
-		{
-			if (buffer == NULL)
-			{
-				printf("Executing stage: %i\n", i);
-				timings[i] = Ssds[i].event_arrive(type, logical_address, size, start_time, NULL);
-			}
+    if (PARALLELISM_MODE == 1) // Striping
+    {
+        double timings[RAID_NUMBER_OF_PHYSICAL_SSDS];
+        for (uint i=0; i<RAID_NUMBER_OF_PHYSICAL_SSDS; i++)
+        {
+            if (buffer == NULL)
+            {
+                printf("Executing stage: %i\n", i);
+                timings[i] = Ssds[i].event_arrive(type, logical_address, size, start_time, NULL);
+            }
 
-			else
-				timings[i] = Ssds[i].event_arrive(type, logical_address, size, start_time, (char*)buffer +(i*PAGE_SIZE));
+            else
+                timings[i] = Ssds[i].event_arrive(type, logical_address, size, start_time, (char*)buffer +(i*PAGE_SIZE));
 
-		}
+        }
 
-		for (int i=0;i<RAID_NUMBER_OF_PHYSICAL_SSDS-1;i++)
-		{
-			if (timings[i] != timings[i+1])
-				fprintf(stderr, "ERROR: Timings are not the same. %d %d\n", timings[i], timings[i+1]);
-		}
+        for (uint i=0; i<RAID_NUMBER_OF_PHYSICAL_SSDS-1; i++)
+        {
+            if (timings[i] != timings[i+1])
+                fprintf(stderr, "ERROR: Timings are not the same. %f %f\n", timings[i], timings[i+1]);
+        }
 
-		return timings[0];
-	}
-	else if (PARALLELISM_MODE == 2) // Splitted address space
-	{
-		return Ssds[logical_address%RAID_NUMBER_OF_PHYSICAL_SSDS].event_arrive(type, logical_address, size, start_time, (char*)buffer);
-	}
+        return timings[0];
+    }
+    else if (PARALLELISM_MODE == 2) // Splitted address space
+    {
+        return Ssds[logical_address%RAID_NUMBER_OF_PHYSICAL_SSDS].event_arrive(type, logical_address, size, start_time, (char*)buffer);
+    }
 
-	return 0;
+    return 0;
 }
 
 /*
@@ -118,5 +118,5 @@ double RaidSsd::event_arrive(enum event_type type, ulong logical_address, uint s
  */
 void *RaidSsd::get_result_buffer()
 {
-	return global_buffer;
+    return global_buffer;
 }

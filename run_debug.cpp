@@ -25,44 +25,44 @@ using namespace ssd;
 
 void debug(Ssd& ssd) throw (std::invalid_argument)
 {
-	char ioType;
-	ulong vaddr;
-	while (std::cin >> ioType >> vaddr)
-	{
-		event_type type;
-		switch (ioType)
-		{
-			case 'R':
-			case 'r':
-				type = READ;
-				break;
-			case 'W':
-			case 'w':
-				type = WRITE;
-				break;
-			case 'T':
-			case 't':
-				type = TRIM;
-				break;
-			default:
-				throw std::invalid_argument("Invalid I/O type!");
-		}
-		global_buffer = nullptr;
-		ssd.event_arrive(type, vaddr, 1, time(NULL));
-		if (type == READ)
-			std::cout << global_buffer << std::endl;
-	}
+    char ioType;
+    ulong vaddr;
+    while (std::cin >> ioType >> vaddr)
+    {
+        event_type type;
+        switch (ioType)
+        {
+        case 'R':
+        case 'r':
+            type = READ;
+            break;
+        case 'W':
+        case 'w':
+            type = WRITE;
+            break;
+        case 'T':
+        case 't':
+            type = TRIM;
+            break;
+        default:
+            throw std::invalid_argument("Invalid I/O type!");
+        }
+        global_buffer = nullptr;
+        ssd.event_arrive(type, vaddr, 1, time(NULL));
+        if (type == READ)
+            std::cout << global_buffer << std::endl;
+    }
 }
 
 int main() throw (std::invalid_argument)
 {
-	load_config();
-	print_config(stderr);
+    load_config();
+    print_config(stderr);
 
-	Ssd ssd;
+    Ssd ssd;
 
-	std::clog << "INITIALIZING SSD" << std::endl;
+    std::clog << "INITIALIZING SSD" << std::endl;
 
-	debug(ssd);
+    debug(ssd);
 }
 
