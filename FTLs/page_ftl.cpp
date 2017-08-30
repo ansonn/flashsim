@@ -28,92 +28,92 @@
 using namespace ssd;
 
 FtlImpl_Page::FtlImpl_Page(Controller &controller):
-	FtlParent(controller)
+    FtlParent(controller)
 {
-	trim_map = new bool[NUMBER_OF_ADDRESSABLE_BLOCKS * BLOCK_SIZE];
+    trim_map = new bool[NUMBER_OF_ADDRESSABLE_BLOCKS * BLOCK_SIZE];
 
-	numPagesActive = 0;
+    numPagesActive = 0;
 
-	return;
+    return;
 }
 
 FtlImpl_Page::~FtlImpl_Page(void)
 {
 
-	return;
+    return;
 }
 
 enum status FtlImpl_Page::read(Event &event)
 {
-	event.set_address(Address(0, PAGE));
-	event.set_noop(true);
+    event.set_address(Address(0, PAGE));
+    event.set_noop(true);
 
-	controller.stats.numFTLRead++;
+    controller.stats.numFTLRead++;
 
-	return controller.issue(event);
+    return controller.issue(event);
 }
 
 enum status FtlImpl_Page::write(Event &event)
 {
-	event.set_address(Address(1, PAGE));
-	event.set_noop(true);
+    event.set_address(Address(1, PAGE));
+    event.set_noop(true);
 
-	controller.stats.numFTLWrite++;
+    controller.stats.numFTLWrite++;
 
-	if (numPagesActive == NUMBER_OF_ADDRESSABLE_BLOCKS * BLOCK_SIZE)
-	{
-		numPagesActive -= BLOCK_SIZE;
+    if (numPagesActive == NUMBER_OF_ADDRESSABLE_BLOCKS * BLOCK_SIZE)
+    {
+        numPagesActive -= BLOCK_SIZE;
 
-		Event eraseEvent = Event(ERASE, event.get_logical_address(), 1, event.get_start_time());
-		eraseEvent.set_address(Address(0, PAGE));
+        Event eraseEvent = Event(ERASE, event.get_logical_address(), 1, event.get_start_time());
+        eraseEvent.set_address(Address(0, PAGE));
 
-		if (controller.issue(eraseEvent) == FAILURE) printf("Erase failed");
+        if (controller.issue(eraseEvent) == FAILURE) printf("Erase failed");
 
-		event.incr_time_taken(eraseEvent.get_time_taken());
+        event.incr_time_taken(eraseEvent.get_time_taken());
 
-		controller.stats.numFTLErase++;
-	}
+        controller.stats.numFTLErase++;
+    }
 
-	numPagesActive++;
+    numPagesActive++;
 
 
-	return controller.issue(event);
+    return controller.issue(event);
 }
 
 enum status FtlImpl_Page::trim(Event &event)
 {
-	controller.stats.numFTLTrim++;
+    controller.stats.numFTLTrim++;
 
-	uint dlpn = event.get_logical_address();
+    uint dlpn = event.get_logical_address();
 
-	if (!trim_map[event.get_logical_address()])
-		trim_map[event.get_logical_address()] = true;
+    if (!trim_map[event.get_logical_address()])
+        trim_map[event.get_logical_address()] = true;
 
-	// Update trim map and update block map if all pages are trimmed. i.e. the state are reseted to optimal.
-	long addressStart = dlpn - dlpn % BLOCK_SIZE;
-	bool allTrimmed = true;
-	for (uint i=addressStart;i<addressStart+BLOCK_SIZE;i++)
-	{
-		if (!trim_map[i])
-			allTrimmed = false;
-	}
+    // Update trim map and update block map if all pages are trimmed. i.e. the state are reseted to optimal.
+    long addressStart = dlpn - dlpn % BLOCK_SIZE;
+    bool allTrimmed = true;
+    for (uint i=addressStart; i<addressStart+BLOCK_SIZE; i++)
+    {
+        if (!trim_map[i])
+            allTrimmed = false;
+    }
 
-	if (allTrimmed)
-	{
-		Event eraseEvent = Event(ERASE, event.get_logical_address(), 1, event.get_start_time());
-		eraseEvent.set_address(Address(0, PAGE));
+    if (allTrimmed)
+    {
+        Event eraseEvent = Event(ERASE, event.get_logical_address(), 1, event.get_start_time());
+        eraseEvent.set_address(Address(0, PAGE));
 
-		if (controller.issue(eraseEvent) == FAILURE) printf("Erase failed");
+        if (controller.issue(eraseEvent) == FAILURE) printf("Erase failed");
 
-		event.incr_time_taken(eraseEvent.get_time_taken());
+        event.incr_time_taken(eraseEvent.get_time_taken());
 
-		for (uint i=addressStart;i<addressStart+BLOCK_SIZE;i++)
-			trim_map[i] = false;
+        for (uint i=addressStart; i<addressStart+BLOCK_SIZE; i++)
+            trim_map[i] = false;
 
-		controller.stats.numFTLErase++;
+        controller.stats.numFTLErase++;
 
-		numPagesActive -= BLOCK_SIZE;
-	}
+        numPagesActive -= BLOCK_SIZE;
+    }
 
-	return SUCCESS;
+    return SUCCESS;
 }
